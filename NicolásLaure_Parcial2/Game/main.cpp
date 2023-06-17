@@ -1,4 +1,5 @@
 #include <iostream>
+#include <windows.h>
 
 using namespace std;
 
@@ -7,18 +8,19 @@ const int TEAM_SIZE = 6;
 struct Pokemon
 {
 	string name{};
-	int defense;
+	int defense{};
 	int healthPoints{};
 	int damageAttack1{};
 	int damageAttack2{};
 	int damageAttack3{};
 
-	int pokemonLevel;
+	int pokemonLevel{};
 
 	void SetStats()
 	{
 		if (pokemonLevel == 1)
 		{
+			name = " ";
 			defense = 500;
 			healthPoints = 2;
 			damageAttack1 = 40;
@@ -27,6 +29,7 @@ struct Pokemon
 		}
 		else if (pokemonLevel == 2)
 		{
+			name = " ";
 			defense = 1000;
 			healthPoints = 3;
 			damageAttack1 = 80;
@@ -35,6 +38,7 @@ struct Pokemon
 		}
 		else
 		{
+			name = " ";
 			defense = 1500;
 			healthPoints = 4;
 			damageAttack1 = 120;
@@ -49,9 +53,12 @@ void Menu();
 void GameLoop(bool isSinglePlayer);
 void PrintRules();
 int PromptInput(int min, int max);
+string StringInput();
+void SetTeams(Pokemon team1[], Pokemon team2[]);
 void SetPlayerTeam(Pokemon team[], bool isHuman);
 void RandomArrange(Pokemon team[]);
-
+void ManualArrange(Pokemon pokemon, Pokemon team[], int position);
+void NamePokemons(Pokemon team[]);
 
 void main()
 {
@@ -78,7 +85,7 @@ void Menu()
 		int response;
 
 		system("cls");
-		cout << "1.single Player\n2.Two Players";
+		cout << "1.single Player\n2.Two Players\n";
 		response = PromptInput(1, 2);
 		if (response == 1)
 			GameLoop(true);
@@ -118,7 +125,7 @@ int PromptInput(int min, int max)
 	bool hasFailed = false;
 	do
 	{
-		cout << "Select an option -->";
+		cout << "Select an option --> ";
 		cin >> response;
 		if (cin.fail())
 		{
@@ -140,31 +147,7 @@ void GameLoop(bool isSinglePlayer)
 {
 	Pokemon team1[TEAM_SIZE];
 	Pokemon team2[TEAM_SIZE];
-
-	for (int i = 0; i < TEAM_SIZE; i++)
-	{
-		if (i == 0)
-		{
-			team1[i].pokemonLevel = 3;
-			team1[i].SetStats();
-			team2[i].pokemonLevel = 3;
-			team2[i].SetStats();
-		}
-		else if (i == 1 || i == 2)
-		{
-			team1[i].pokemonLevel = 2;
-			team1[i].SetStats();
-			team2[i].pokemonLevel = 2;
-			team2[i].SetStats();
-		}
-		else
-		{
-			team1[i].pokemonLevel = 1;
-			team1[i].SetStats();
-			team2[i].pokemonLevel = 1;
-			team2[i].SetStats();
-		}
-	}
+	SetTeams(team1, team2);
 
 	bool wantsToPlayAgain = false;
 	do
@@ -186,14 +169,15 @@ void GameLoop(bool isSinglePlayer)
 		{
 			for (Pokemon poke : team1)
 			{
-				cout << poke.pokemonLevel;
+				cout << poke.name << ", ";
 			}
 			cout << endl;
 			for (Pokemon poke : team2)
 			{
-				cout << poke.pokemonLevel;
+				cout << poke.name << ", ";
 			}
 			isRunning = false;
+			cout << endl;
 			system("pause");
 		}
 
@@ -232,37 +216,141 @@ void GameLoop(bool isSinglePlayer)
 	} while (wantsToPlayAgain);
 }
 
+void SetTeams(Pokemon team1[], Pokemon team2[])
+{
+	for (int i = 0; i < TEAM_SIZE; i++)
+	{
+		if (i == 0)
+		{
+			team1[i].pokemonLevel = 3;
+			team1[i].SetStats();
+			team2[i].pokemonLevel = 3;
+			team2[i].SetStats();
+		}
+		else if (i == 1 || i == 2)
+		{
+			team1[i].pokemonLevel = 2;
+			team1[i].SetStats();
+			team2[i].pokemonLevel = 2;
+			team2[i].SetStats();
+		}
+		else
+		{
+			team1[i].pokemonLevel = 1;
+			team1[i].SetStats();
+			team2[i].pokemonLevel = 1;
+			team2[i].SetStats();
+		}
+	}
+}
 void SetPlayerTeam(Pokemon team[], bool isHuman)
 {
+
 	if (isHuman)
 	{
+		NamePokemons(team);
+
 		cout << "Choose if you want to arrange the order of your team or you want a random order\n 1.Arrange\n 2.Auto\n";
 		int response = PromptInput(1, 2);
 		if (response == 1)
 		{
+
 			Pokemon ownTeam[TEAM_SIZE];
+
 			for (int i = 0; i < TEAM_SIZE; i++)
 			{
-				ownTeam[i] = team[i];
+				ownTeam[i].name = " ";
 			}
-			for (Pokemon pokemon : ownTeam)
+
+			for (int i = 0; i < TEAM_SIZE; i++)
 			{
-				if (pokemon.pokemonLevel == 1)
+				bool isValidPlace = true;
+				do
 				{
-					cout << "Choose the position you would like your " << pokemon.name << " to be, 1-6";
-					//CONTINUE HEEEERRREEEEEEEEEEEE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				}
+					cout << "Choose the position you would like your " << team[i].name << " to be, 1-6  ---> ";
+					int positionResponse = PromptInput(1, TEAM_SIZE) - 1;
+					if (ownTeam[positionResponse].name == " ")
+					{
+						isValidPlace = true;
+						ManualArrange(team[i], ownTeam, positionResponse);
+					}
+					else
+					{
+						isValidPlace = false;
+						cout << "This Place is already used by another Pokemon \n";
+					}
+
+				} while (!isValidPlace);
+			}
+			for (int i = 0; i < TEAM_SIZE; i++)
+			{
+				team[i] = ownTeam[i];
 			}
 		}
 		else
 			RandomArrange(team);
 	}
 	else
+	{
+		for (int i = 0; i < TEAM_SIZE; i++)
+		{
+			switch (i)
+			{
+			case 0:
+				team[i].name = "Articuno";
+				break;
+			case 1:
+				team[i].name = "Wartortle";
+				break;
+			case 2:
+				team[i].name = "ButterFly";
+				break;
+			case 3:
+				team[i].name = "Ratata";
+				break;
+			case 4:
+				team[i].name = "Pidgeotto";
+				break;
+			case 5:
+				team[i].name = "Diglett";
+				break;
+			default:
+				break;
+			}
+		}
+
 		RandomArrange(team);
+	}
 }
 
+void NamePokemons(Pokemon team[])
+{
+	for (int i = 0; i < TEAM_SIZE; i++)
+	{
+		cout << "Choose a name for your " << i + 1 << " Pokemon, a Beautiful level " << team[i].pokemonLevel << " Pokemon --> ";
+		team[i].name = StringInput();
+	}
+}
 
+string StringInput()
+{
+	bool isValidInput = true;
+	string response;
+	do
+	{
+		cin >> response;
+		if (cin.fail())
+		{
+			isValidInput = false;
+			cin.clear();
+			cin.ignore();
+		}
+		else
+			isValidInput = true;
+	} while (!isValidInput);
 
+	return response;
+}
 void RandomArrange(Pokemon team[])
 {
 	for (int i = 0; i < TEAM_SIZE; i++)
@@ -273,4 +361,9 @@ void RandomArrange(Pokemon team[])
 		team[i] = team[randomIndex];
 		team[randomIndex] = temp;
 	}
+}
+
+void ManualArrange(Pokemon pokemon, Pokemon team[], int position)
+{
+	team[position] = pokemon;
 }
