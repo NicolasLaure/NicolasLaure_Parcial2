@@ -4,7 +4,7 @@
 using namespace std;
 
 const int TEAM_SIZE = 6;
-
+const int ATTACKS_QTY = 3;
 struct Vector2
 {
 	int x;
@@ -14,10 +14,12 @@ struct Pokemon
 {
 	string name{};
 	int defense{};
+	int maxDefense{};
 	int healthPoints{};
 	int damageAttack1{};
 	int damageAttack2{};
 	int damageAttack3{};
+	bool isAlive{};
 
 	int pokemonLevel{};
 
@@ -28,29 +30,46 @@ struct Pokemon
 		if (pokemonLevel == 1)
 		{
 			name = " ";
-			defense = 500;
+			maxDefense = 500;
+			defense = maxDefense;
 			healthPoints = 2;
 			damageAttack1 = 40;
 			damageAttack2 = 60;
 			damageAttack3 = 100;
+			isAlive = true;
 		}
 		else if (pokemonLevel == 2)
 		{
 			name = " ";
-			defense = 1000;
+			maxDefense = 1000;
+			defense = maxDefense;
 			healthPoints = 3;
 			damageAttack1 = 80;
 			damageAttack2 = 110;
 			damageAttack3 = 150;
+			isAlive = true;
 		}
 		else
 		{
 			name = " ";
-			defense = 1500;
+			maxDefense = 1500;
+			defense = maxDefense;
 			healthPoints = 4;
 			damageAttack1 = 120;
 			damageAttack2 = 200;
 			damageAttack3 = 300;
+			isAlive = true;
+		}
+	}
+
+	void TakeDamage(int damage)
+	{
+		defense -= damage;
+
+		if (defense <= 0)
+		{
+			defense = maxDefense;
+			healthPoints--;
 		}
 	}
 };
@@ -68,8 +87,10 @@ void ManualArrange(Pokemon pokemon, Pokemon team[], int position);
 void NamePokemons(Pokemon team[]);
 
 
-void PrintTeam(Pokemon team[]);
+void PlayerTurn(Pokemon ownTeam[], Pokemon enemyTeam[]);
+void BotTurn(Pokemon botTeam[], Pokemon playerTeam[]);
 
+void PrintTeam(Pokemon team[]);
 
 //Global Variables
 HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -77,12 +98,13 @@ const int DEFAULT_TEXT_ATTRIBUTE = 7;
 const int FULL_DEFENSE_TEXT_ATTRIBUTE = 10;
 const int TWO_THIRDS_DEFENSE_TEXT_ATTRIBUTE = 14;
 const int ONE_THIRD_DEFENSE_TEXT_ATTRIBUTE = 12;
+const int DEAD_TEXT_ATTRIBUTE = 8;
+
 void main()
 {
 	Initialize();
 	Menu();
 }
-
 
 void Initialize()
 {
@@ -182,7 +204,7 @@ void GameLoop(bool isSinglePlayer)
 			SetPlayerTeam(team2, true);
 		}
 
-		bool isRunning(true);
+		bool isRunning = true;
 		while (isRunning)
 		{
 			for (Pokemon poke : team1)
@@ -194,12 +216,49 @@ void GameLoop(bool isSinglePlayer)
 			{
 				cout << poke.name << ", ";
 			}
-			isRunning = false;
 			cout << endl;
 			system("cls");
 			PrintTeam(team1);
 			PrintTeam(team2);
-			system("pause");
+
+			if (isSinglePlayer)
+			{
+				PlayerTurn(team1, team2);
+				BotTurn(team2, team1);
+			}
+			else
+			{
+				PlayerTurn(team1, team2);
+				PlayerTurn(team2, team1);
+
+			}
+
+			int team1PokemonsAlive = 0;
+			int team2PokemonsAlive = 0;
+
+			for (int i = 0; i < TEAM_SIZE; i++)
+			{
+				if (team1[i].isAlive)
+					team1PokemonsAlive++;
+
+				if (team2[i].isAlive)
+					team2PokemonsAlive++;
+			}
+
+			if (team1PokemonsAlive < 1)
+			{
+				if (isSinglePlayer)
+					cout << "El Bot ha ganado la batalla\n";
+				else
+					cout << "El Jugador 2 ha ganado la batalla\n";
+				isRunning = false;
+			}
+			else if (team2PokemonsAlive < 1)
+			{
+				if (isSinglePlayer)
+					cout << "El Jugador 1 ha ganado la batalla\n";
+				isRunning = false;
+			}
 		}
 
 		bool isValidInput = true;
@@ -414,6 +473,8 @@ void PrintTeam(Pokemon team[])
 			pos.Y = team[i].position.y;
 
 		SetConsoleCursorPosition(handle, pos);
+		if (!team[i].isAlive)
+			SetConsoleTextAttribute(handle, DEAD_TEXT_ATTRIBUTE);
 
 		if (team[i].name.length() >= 3)
 			cout << team[i].name.at(0) << team[i].name.at(1) << team[i].name.at(2);
@@ -422,25 +483,33 @@ void PrintTeam(Pokemon team[])
 		else
 			cout << team[i].name.at(0);
 
+		SetConsoleTextAttribute(handle, DEFAULT_TEXT_ATTRIBUTE);
+
 		pos.Y++;
 		SetConsoleCursorPosition(handle, pos);
 
-		if (team[i].defense > team[i].defense / 1.5)
+		if (team[i].defense > team[i].maxDefense / 1.5 && team[i].isAlive)
 		{
 			SetConsoleTextAttribute(handle, FULL_DEFENSE_TEXT_ATTRIBUTE);
 			cout << (char)219 << (char)219 << (char)219;
 			SetConsoleTextAttribute(handle, DEFAULT_TEXT_ATTRIBUTE);
 		}
-		else if (team[i].defense > team[i].defense / 3)
+		else if (team[i].defense > team[i].maxDefense / 3 && team[i].isAlive)
 		{
 			SetConsoleTextAttribute(handle, TWO_THIRDS_DEFENSE_TEXT_ATTRIBUTE);
 			cout << (char)219 << (char)219;
 			SetConsoleTextAttribute(handle, DEFAULT_TEXT_ATTRIBUTE);
 		}
-		else
+		else if (team[i].isAlive)
 		{
 			SetConsoleTextAttribute(handle, ONE_THIRD_DEFENSE_TEXT_ATTRIBUTE);
 			cout << (char)219;
+			SetConsoleTextAttribute(handle, DEFAULT_TEXT_ATTRIBUTE);
+		}
+		else if (!team[i].isAlive)
+		{
+			SetConsoleTextAttribute(handle, DEAD_TEXT_ATTRIBUTE);
+			cout << "X_X";
 			SetConsoleTextAttribute(handle, DEFAULT_TEXT_ATTRIBUTE);
 		}
 
@@ -450,4 +519,99 @@ void PrintTeam(Pokemon team[])
 	pos.X = 0;
 	pos.Y = 10;
 	SetConsoleCursorPosition(handle, pos);
+}
+
+void PlayerTurn(Pokemon ownTeam[], Pokemon enemyTeam[])
+{
+	cout << "Seleccione un Pokemon: (1-6) ";
+	int pokemonSelection = PromptInput(1, 6) - 1;
+	for (int i = 0; i < TEAM_SIZE; i++)
+	{
+		if (i == pokemonSelection)
+		{
+			cout << "El Pokemon elegido es: " << ownTeam[i].name << " tiene los siguientes ataques:\n";
+			cout << "1. Placaje: " << ownTeam[i].damageAttack1 << " puntos de ataque\n";
+			cout << "2. Corte: " << ownTeam[i].damageAttack2 << " puntos de ataque\n";
+			cout << "3. Terremoto: " << ownTeam[i].damageAttack3 << " puntos de ataque\n";
+
+			cout << "Seleccione un ataque --> ";
+			int selectedAttack = PromptInput(1, 3);
+
+			cout << "Seleccione un Enemigo (1-6) --> ";
+			int selectedEnemy;
+			bool isValidEnemy = true;
+			do
+			{
+				selectedEnemy = PromptInput(1, 6) - 1;
+				if (!enemyTeam[selectedEnemy].isAlive)
+					isValidEnemy = false;
+				else
+					isValidEnemy = true;
+			} while (!isValidEnemy);
+
+			if (selectedAttack == 1)
+				enemyTeam[selectedEnemy].TakeDamage(ownTeam[pokemonSelection].damageAttack1);
+			else if (selectedAttack == 2)
+				enemyTeam[selectedEnemy].TakeDamage(ownTeam[pokemonSelection].damageAttack2);
+			else
+				enemyTeam[selectedEnemy].TakeDamage(ownTeam[pokemonSelection].damageAttack3);
+
+			if (enemyTeam[selectedEnemy].healthPoints <= 0)
+				enemyTeam[selectedEnemy].isAlive = false;
+		}
+	}
+}
+
+void BotTurn(Pokemon botTeam[], Pokemon playerTeam[])
+{
+	bool isValidPokemon = true;
+	int pokemonSelection;
+	do
+	{
+		pokemonSelection = rand() % TEAM_SIZE;
+		if (!botTeam[pokemonSelection].isAlive)
+			isValidPokemon = false;
+		else
+			isValidPokemon = true;
+
+	} while (!isValidPokemon);
+	for (int i = 0; i < TEAM_SIZE; i++)
+	{
+		if (i == pokemonSelection)
+		{
+			cout << "El Pokemon elegido por el enemigo es: " << botTeam[i].name << endl;
+			system("pause");
+			int selectedAttack = rand() % ATTACKS_QTY;
+
+			int selectedEnemy;
+			bool isValidEnemy = true;
+			do
+			{
+				selectedEnemy = rand() % TEAM_SIZE;
+				if (!playerTeam[selectedEnemy].isAlive)
+					isValidEnemy = false;
+				else
+					isValidEnemy = true;
+			} while (!isValidEnemy);
+			if (selectedAttack == 1)
+			{
+				playerTeam[selectedEnemy].TakeDamage(botTeam[pokemonSelection].damageAttack1);
+				cout << "El enemigo acaba de atacar a tu " << playerTeam[selectedEnemy].name << " Restandole " << botTeam[pokemonSelection].damageAttack1;
+			}
+			else if (selectedAttack == 2)
+			{
+				playerTeam[selectedEnemy].TakeDamage(botTeam[pokemonSelection].damageAttack2);
+				cout << "El enemigo acaba de atacar a tu " << playerTeam[selectedEnemy].name << " Restandole " << botTeam[pokemonSelection].damageAttack2;
+			}
+			else
+			{
+				playerTeam[selectedEnemy].TakeDamage(botTeam[pokemonSelection].damageAttack3);
+				cout << "El enemigo acaba de atacar a tu " << playerTeam[selectedEnemy].name << " Restandole " << botTeam[pokemonSelection].damageAttack3;
+			}
+
+			if (playerTeam[selectedEnemy].healthPoints <= 0)
+				playerTeam[selectedEnemy].isAlive = false;
+			system("pause");
+		}
+	}
 }
