@@ -91,6 +91,9 @@ void PlayerTurn(Pokemon ownTeam[], Pokemon enemyTeam[]);
 void BotTurn(Pokemon botTeam[], Pokemon playerTeam[]);
 
 void PrintTeam(Pokemon team[]);
+void DebugPrint(Pokemon team1[], Pokemon team2[]);
+
+int DiceRoll(int sides);
 
 //Global Variables
 HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -116,6 +119,7 @@ void Initialize()
 **/
 void Menu()
 {
+	system("cls");
 	cout << "Pocket Mutants (nintendon't sue me please :) ) \n \n";
 	cout << "1.Play \n2.Rules \n3.Quit \n";
 	switch (PromptInput(1, 3))
@@ -149,6 +153,17 @@ void Menu()
 void PrintRules()
 {
 	//print
+	cout << "Rules:\n\n\n";
+	cout << "This game is about a pokemon combat, a team of determined pokemons against another team." << endl;
+	cout << "Each team has 6 (six) pokemons that will fight for them:\n  1 (one) pokemon level 3 (Three)\n  2 (two) pokemons level 2 (two)\n  3 (three) pokemons level 1 (one)" << endl;
+
+	cout << "\nThe level of a pokemon will determine their strength: \n";
+	cout << "Level 1: Lives: 2\tDefense: 500\tAttack1: 40\tAttack2: 60\tAttack3: 100" << endl;
+	cout << "Level 2: Lives: 3\tDefense: 1000\tAttack1: 80\tAttack2: 110\tAttack3: 150" << endl;
+	cout << "Level 3: Lives: 4\tDefense: 1500\tAttack1: 120\tAttack2: 200\tAttack3: 300" << endl;
+
+	cout << "To win the match you have to defeat every pokemon of the other team\nTo defeat an enemy, you have to lower their lives until it reaches zero\n";
+	cout << "To lower a pokemon's life, you have to make his defense reach zero, \nthis way, each attack a pokemon strikes on another only affect the objective defense" << endl;
 	system("pause");
 	Menu();
 }
@@ -184,6 +199,7 @@ int PromptInput(int min, int max)
 **/
 void GameLoop(bool isSinglePlayer)
 {
+	bool isDebugModeOn = true;
 	Pokemon team1[TEAM_SIZE];
 	Pokemon team2[TEAM_SIZE];
 
@@ -192,14 +208,17 @@ void GameLoop(bool isSinglePlayer)
 	{
 		SetTeams(team1, team2);
 
+		system("cls");
 		cout << "Player 1: Organize your team\n";
 		SetPlayerTeam(team1, true);
+
 		if (isSinglePlayer)
 		{
 			SetPlayerTeam(team2, false);
 		}
 		else
 		{
+			system("cls");
 			cout << "Player 2: Organize your team\n";
 			SetPlayerTeam(team2, true);
 		}
@@ -207,19 +226,14 @@ void GameLoop(bool isSinglePlayer)
 		bool isRunning = true;
 		while (isRunning)
 		{
-			for (Pokemon poke : team1)
-			{
-				cout << poke.name << ", ";
-			}
-			cout << endl;
-			for (Pokemon poke : team2)
-			{
-				cout << poke.name << ", ";
-			}
-			cout << endl;
 			system("cls");
 			PrintTeam(team1);
 			PrintTeam(team2);
+
+			if (isDebugModeOn)
+			{
+				DebugPrint(team1, team2);
+			}
 
 			if (isSinglePlayer)
 			{
@@ -229,8 +243,12 @@ void GameLoop(bool isSinglePlayer)
 			else
 			{
 				PlayerTurn(team1, team2);
-				PlayerTurn(team2, team1);
 
+				system("cls");
+				PrintTeam(team1);
+				PrintTeam(team2);
+
+				PlayerTurn(team2, team1);
 			}
 
 			int team1PokemonsAlive = 0;
@@ -335,7 +353,6 @@ void SetTeams(Pokemon team1[], Pokemon team2[])
 }
 void SetPlayerTeam(Pokemon team[], bool isHuman)
 {
-
 	if (isHuman)
 	{
 		NamePokemons(team);
@@ -382,33 +399,43 @@ void SetPlayerTeam(Pokemon team[], bool isHuman)
 	}
 	else
 	{
+		const int RANDOM_POKEMON_NAMES = 15;
+		string PokemonNames[RANDOM_POKEMON_NAMES] =
+		{
+			"Articuno",
+			"Wartortle",
+			"ButterFly",
+			"Ratata",
+			"Pidgeotto",
+			"Diglett",
+			"Charizard",
+			"Pikachu",
+			"Kha'Zix",
+			"Lapras",
+			"Latias",
+			"Nidoking",
+			"Cubone",
+			"Rapidash",
+			"Chimchar"
+		};
+
 		for (int i = 0; i < TEAM_SIZE; i++)
 		{
-			switch (i)
+			int counter = 0;
+			string randomName;
+			do
 			{
-			case 0:
-				team[i].name = "Articuno";
-				break;
-			case 1:
-				team[i].name = "Wartortle";
-				break;
-			case 2:
-				team[i].name = "ButterFly";
-				break;
-			case 3:
-				team[i].name = "Ratata";
-				break;
-			case 4:
-				team[i].name = "Pidgeotto";
-				break;
-			case 5:
-				team[i].name = "Diglett";
-				break;
-			default:
-				break;
-			}
-		}
+				randomName = PokemonNames[rand() % RANDOM_POKEMON_NAMES];
+				counter = 0;
+				for (int j = 0; j < TEAM_SIZE; j++)
+				{
+					if (team[j].name == randomName)
+						counter++;
+				}
+			} while (counter != 0);
 
+			team[i].name = randomName;
+		}
 		RandomArrange(team);
 	}
 }
@@ -537,11 +564,11 @@ void PlayerTurn(Pokemon ownTeam[], Pokemon enemyTeam[])
 			cout << "Seleccione un ataque --> ";
 			int selectedAttack = PromptInput(1, 3);
 
-			cout << "Seleccione un Enemigo (1-6) --> ";
 			int selectedEnemy;
 			bool isValidEnemy = true;
 			do
 			{
+				cout << "Seleccione un Enemigo (1-6) --> ";
 				selectedEnemy = PromptInput(1, 6) - 1;
 				if (!enemyTeam[selectedEnemy].isAlive)
 					isValidEnemy = false;
@@ -549,12 +576,30 @@ void PlayerTurn(Pokemon ownTeam[], Pokemon enemyTeam[])
 					isValidEnemy = true;
 			} while (!isValidEnemy);
 
-			if (selectedAttack == 1)
+			int defenseAgainst = DiceRoll(3);
+			if (selectedAttack == 1 && defenseAgainst != selectedAttack)
+			{
 				enemyTeam[selectedEnemy].TakeDamage(ownTeam[pokemonSelection].damageAttack1);
-			else if (selectedAttack == 2)
+				cout << "Ataque a " << enemyTeam[selectedAttack].name << " Restandole " << ownTeam[pokemonSelection].damageAttack1 << " Puntos de Vida" << endl;
+				system("pause");
+			}
+			else if (selectedAttack == 2 && defenseAgainst != selectedAttack)
+			{
 				enemyTeam[selectedEnemy].TakeDamage(ownTeam[pokemonSelection].damageAttack2);
-			else
+				cout << "Ataque a " << enemyTeam[selectedAttack].name << " Restandole " << ownTeam[pokemonSelection].damageAttack2 << " Puntos de Vida" << endl;
+				system("pause");
+			}
+			else if (selectedAttack == 3 && defenseAgainst != selectedAttack)
+			{
 				enemyTeam[selectedEnemy].TakeDamage(ownTeam[pokemonSelection].damageAttack3);
+				cout << "Ataque a " << enemyTeam[selectedAttack].name << " Restandole " << ownTeam[pokemonSelection].damageAttack3 << " Puntos de Vida" << endl;
+				system("pause");
+			}
+			else if (defenseAgainst == selectedAttack)
+			{
+				cout << "El Pokemon  " << enemyTeam[selectedEnemy].name << " del enemigo ha esquivado el ataque.\n";
+				system("pause");
+			}
 
 			if (enemyTeam[selectedEnemy].healthPoints <= 0)
 				enemyTeam[selectedEnemy].isAlive = false;
@@ -593,25 +638,48 @@ void BotTurn(Pokemon botTeam[], Pokemon playerTeam[])
 				else
 					isValidEnemy = true;
 			} while (!isValidEnemy);
-			if (selectedAttack == 1)
+
+			int defenseAgainst = DiceRoll(3);
+
+			if (selectedAttack == 1 && defenseAgainst != selectedAttack)
 			{
 				playerTeam[selectedEnemy].TakeDamage(botTeam[pokemonSelection].damageAttack1);
 				cout << "El enemigo acaba de atacar a tu " << playerTeam[selectedEnemy].name << " Restandole " << botTeam[pokemonSelection].damageAttack1;
+				system("pause");
 			}
-			else if (selectedAttack == 2)
+			else if (selectedAttack == 2 && defenseAgainst != selectedAttack)
 			{
 				playerTeam[selectedEnemy].TakeDamage(botTeam[pokemonSelection].damageAttack2);
 				cout << "El enemigo acaba de atacar a tu " << playerTeam[selectedEnemy].name << " Restandole " << botTeam[pokemonSelection].damageAttack2;
+				system("pause");
 			}
-			else
+			else if (selectedAttack == 3 && defenseAgainst != selectedAttack)
 			{
 				playerTeam[selectedEnemy].TakeDamage(botTeam[pokemonSelection].damageAttack3);
 				cout << "El enemigo acaba de atacar a tu " << playerTeam[selectedEnemy].name << " Restandole " << botTeam[pokemonSelection].damageAttack3;
+				system("pause");
+			}
+			else if (defenseAgainst == selectedAttack)
+			{
+				cout << "Tu Pokemon  " << playerTeam[selectedEnemy].name << " ha esquivadp el ataque del enemigo.\n";
+				system("pause");
 			}
 
 			if (playerTeam[selectedEnemy].healthPoints <= 0)
 				playerTeam[selectedEnemy].isAlive = false;
-			system("pause");
 		}
+	}
+}
+
+int DiceRoll(int sides)
+{
+	return (rand() % sides) + 1;
+}
+
+void DebugPrint(Pokemon team1[], Pokemon team2[])
+{
+	for (int i = 0; i < TEAM_SIZE; i++)
+	{
+		cout << team1[i].name << " " << team1[i].pokemonLevel << "\t\t" << team2[i].name << " " << team2[i].pokemonLevel << endl << endl;
 	}
 }
