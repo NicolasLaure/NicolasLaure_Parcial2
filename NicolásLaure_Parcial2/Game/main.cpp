@@ -680,6 +680,6 @@ void DebugPrint(Pokemon team1[], Pokemon team2[])
 {
 	for (int i = 0; i < TEAM_SIZE; i++)
 	{
-		cout << team1[i].name << " " << team1[i].pokemonLevel << "\t\t" << team2[i].name << " " << team2[i].pokemonLevel << endl << endl;
+		cout << team1[i].name << " " << team1[i].pokemonLevel  << " " << team1[i].defense << " " << team1[i].healthPoints << "\t\t" << team2[i].name << " " << team2[i].pokemonLevel << " " << team2[i].defense << " " << team2[i].healthPoints << endl << endl;
 	}
 }
