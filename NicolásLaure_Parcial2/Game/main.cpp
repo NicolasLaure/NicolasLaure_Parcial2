@@ -85,6 +85,7 @@ void SetPlayerTeam(Pokemon team[], bool isHuman);
 void RandomArrange(Pokemon team[]);
 void ManualArrange(Pokemon pokemon, Pokemon team[], int position);
 void NamePokemons(Pokemon team[]);
+void Credits();
 
 
 void PlayerTurn(Pokemon ownTeam[], Pokemon enemyTeam[]);
@@ -121,8 +122,8 @@ void Menu()
 {
 	system("cls");
 	cout << "Pocket Mutants (nintendon't sue me please :) ) \n \n";
-	cout << "1.Play \n2.Rules \n3.Quit \n";
-	switch (PromptInput(1, 3))
+	cout << "1.Play \n2.Rules \n3.Credits \n4.Quit \n";
+	switch (PromptInput(1, 4))
 	{
 	case 1:
 		int response;
@@ -140,6 +141,9 @@ void Menu()
 		PrintRules();
 		break;
 	case 3:
+		Credits();
+		break;
+	case 4:
 		system(0);
 		break;
 	default:
@@ -147,6 +151,14 @@ void Menu()
 	}
 }
 
+
+void Credits()
+{
+	system("cls");
+	cout << "Created by Nicolas Laure\nFundamentos-Programacion-2022 ImageCampus\n";
+	system("pause");
+	Menu();
+}
 /**
 	Prints The rules and goes back to menu after pressing any key
 **/
